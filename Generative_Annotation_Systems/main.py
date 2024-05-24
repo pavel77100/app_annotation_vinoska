@@ -1,43 +1,19 @@
-
-
-
-
-# from genetic import genetic_generator
 from genetic4 import genetic_generator_loop
-# from code1 import genetic
-
-# import matplotlib.pyplot as plt
-
-
-from Image_constructor import image_generator_devide
-
-import json
-# from deserial import deserial_funk
 from deserial import deserial_funk_for_class
 
+import json
 import time
+import numpy as np
 
 from segment import Segment
-# from code1 import deserial
-
 from fastapi import FastAPI, UploadFile, File
 from PIL import Image
-
 from Image_constructor import image_generator_devide
 
-import numpy as np
 
 from multiprocessing import Pool
 
-# def serial(gen, x0, y0, koef_s):
-#    gen_convert = []
-#    for item in gen:
-#       gen_convert.append({"V": item["V"]*koef_s+y0,
-#                           "U":item["V"]*koef_s+x0,
-#
-#                           "U": item["V"] * koef_s + x0
-#                           "TagId":item["TagId"]})
-#    return gen_convert
+
 
 def dots_to_segment_coordinates(array_dots, V_start, U_start, scale_conv, optimaze_k):
    for item in array_dots:
@@ -254,12 +230,6 @@ async def test222(
 
 
 
-
-   # result1 = genetic_generator_loop((lenght_V_bt_sg_img, lenght_U_img), img_bottom, img_compress_bottom,
-   #                                  array_convert_dots_bt)
-   # result2 = genetic_generator_loop((lenght_V_tp_sg_img, lenght_U_img), img_top, img_compress_top,
-   #                                  array_convert_dots_tp)
-
    start_rasch = time.time()
 
    with Pool(4) as pool:
@@ -296,49 +266,6 @@ async def test222(
 
    return (json.dumps(otvet))
 
-# def generative(data2, img2):
-# def generative(arg):
-#    data2 = arg[0]
-#    img2 = arg[1]
-#    automatic_size_list, automatic_size_box, automatic_coord_obj, id_s, x0, y0, scale_mn, size_orig_l = deserial_funk(
-#       data2)
-#
-#    gen, size_list_g_y = genetic_generator(automatic_size_list, automatic_size_box, automatic_coord_obj, id_s, img2)
-#    scale_for_list = size_orig_l / size_list_g_y
-#
-#    result = serial(gen, x0, y0, scale_for_list)
-#
-#    return (json.dumps(result))
-
-
-# @app.post("/test333")
-# async def test333(
-#
-#       scrFile: UploadFile = File(...),
-#       jsFile: UploadFile = File(...),
-#       scrFile1: UploadFile = File(...),
-#       jsFile1: UploadFile = File(...)
-#    ):
-#    data = json.load(jsFile.file)
-#    img = Image.open(scrFile.file)
-#
-#    data1 = json.load(jsFile1.file)
-#    img1 = Image.open(scrFile1.file)
-#
-#    send = [[data, img],[data1, img1]]
-#
-#    with Pool(4) as pool:
-#       result = pool.map(generative, send)
-#
-#    # automatic_size_list, automatic_size_box, automatic_coord_obj, id_s, x0, y0, scale_mn, size_orig_l = deserial_funk(
-#    #    data)
-#    #
-#    # gen, size_list_g_y = genetic_generator(automatic_size_list, automatic_size_box, automatic_coord_obj, id_s, img)
-#    # scale_for_list = size_orig_l / size_list_g_y
-#    #
-#    # result = serial(gen, x0, y0, scale_for_list)
-#
-#    return (json.dumps(result))
 
 
 @app.post("/data")
@@ -440,11 +367,6 @@ async def test22222(
 
 
 
-
-   # result1 = genetic_generator_loop((lenght_V_bt_sg_img, lenght_U_img), img_bottom, img_compress_bottom,
-   #                                  array_convert_dots_bt)
-   # result2 = genetic_generator_loop((lenght_V_tp_sg_img, lenght_U_img), img_top, img_compress_top,
-   #                                  array_convert_dots_tp)
 
    print("Флаг main 1")
 

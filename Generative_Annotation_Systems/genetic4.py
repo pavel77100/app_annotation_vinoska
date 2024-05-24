@@ -27,40 +27,17 @@ MARGIN_LINE = 1
 SCALE_STEP = 0.7
 scale_step_int = int(math.ceil(SCALE_STEP))
 
-# def genetic_generator_loop(automatic_size_list, automatic_size_box, automatic_coord_obj, id_s, IMG):
 
 def genetic_generator_loop(size_of_list, k, k_kompress, data_box):
-
-
-    # size_of_list = np.around(np.divide(automatic_size_list, SCALE_STEP)).astype(int)
-    # sizes_of_boxes = np.ceil(np.divide(automatic_size_box, SCALE_STEP * 2.2)).astype(int)
-    # coordinates_objects = np.around(np.divide(automatic_coord_obj, SCALE_STEP)).astype(int)
-
-    # margin_line = math.ceil(np.divide(MARGIN_LINE, SCALE_STEP))
-    # print("margin_line", margin_line)
-
-    # шаг сетки для расчета
-    # k, k_kompress = Image_constructor.image_generator(IMG, size_of_list[0], SCALE_STEP, size_of_list[1])
-    # k = k_kompress
-    # print(size_of_list)
 
     r_min_convert = np.around(np.divide(R_MIN, SCALE_STEP)).astype(int)
     r_max_convert = np.around(np.divide(R_MAX, SCALE_STEP)).astype(int)
 
-    # base_circle = []
-    #
-    # count_annotation = len(sizes_of_boxes)
-
     POPULATION_SIZE = 120  # количество индивидуумов в популяции
-    # P_CROSSOVER = 0.77  # вероятность скрещивания
-    # P_MUTATION = 0.61  # вероятность мутации индивидуума
-
     P_CROSSOVER = 0.35 # вероятность скрещивания
     P_MUTATION = 0.25 # вероятность мутации индивидуума
-
     MAX_GENERATIONS = 850  # максимальное количество поколений
     HALL_OF_FAME_SIZE = 4  # размер зала славы
-
     FINE_FOR_TUBE = 3.0  # штраф за пересечение с системой
 
     hof = tools.HallOfFame(HALL_OF_FAME_SIZE)
@@ -71,23 +48,20 @@ def genetic_generator_loop(size_of_list, k, k_kompress, data_box):
     creator.create("FitnessMin", base.Fitness, weights=(-1.0,))
     creator.create("Individual", list, fitness=creator.FitnessMin)
 
-    # Rectangle_callout.image = k
-    # Rectangle_callout.image = k
-    # Rectangle_callout.image_compress = k_kompress
     Rectangle_callout.R_line = r_max_convert
     Rectangle_callout.r_line = r_min_convert
     Rectangle_callout.penny = FINE_FOR_TUBE
-    # Rectangle_callout.size_of_list = size_of_list
+
 
     boxes_array = []
     global_counter = len(data_box)
     for i in range(global_counter):
-        boxes_array.append(Rectangle_callout((data_box[i]["Height"], data_box[i]["Width"]), (data_box[i]["LeaderEnd_V"], data_box[i]["LeaderEnd_U"]),
+        boxes_array.append(Rectangle_callout((data_box[i]["Height"], data_box[i]["Width"]),
+                                             (data_box[i]["LeaderEnd_V"], data_box[i]["LeaderEnd_U"]),
                                              data_box[i]["TagId"], size_of_list, k, k_kompress))
     global_counter = len(boxes_array)
 
     print("cоздание боксов закончилось")
-
     def deserial():
         pass
 
@@ -95,16 +69,13 @@ def genetic_generator_loop(size_of_list, k, k_kompress, data_box):
         boxes = []
         for n in range(global_counter):
             t = boxes_array[n].coordinate_base_generator()
-
             boxes.extend(t)
-
         return creator.Individual(boxes)
 
     toolbox = base.Toolbox()
     toolbox.register("create_box", create_box, global_counter)
     toolbox.register("populationCreator", tools.initRepeat, list, toolbox.create_box)
-
-    population = toolbox.populationCreator(n=POPULATION_SIZE)
+    population = toolbox.populationCreator(n = POPULATION_SIZE)
 
     def clash_detect(pixel):
         if pixel > 3.1:
@@ -158,7 +129,6 @@ def genetic_generator_loop(size_of_list, k, k_kompress, data_box):
             p2 = p1
             p1 = p_t
 
-
         return [p1, p2]
 
     def k_find(p1):
@@ -186,82 +156,18 @@ def genetic_generator_loop(size_of_list, k, k_kompress, data_box):
 
         if k1 == k2:
             k1 += 0.00001
-        x = (b2 - b1) / (k1 - k2)
 
+        x = (b2 - b1) / (k1 - k2)
         y = k2 * x + b2
 
         test1 = (l1[0][1] <= x <= l1[1][1]) and (l2[0][1] <= x <= l2[1][1])
-
         test2 = (l1[0][0] <= y <= l1[1][0]) and (l2[0][0] <= y <= l2[1][0])
 
         if test1 and test2:
             return 1
         else:
             return 0
-    #
-    # def vinoska_and_box(kb, line_coord, box_coord):
-    #
-    #     b_x1 = box_coord[0][1]
-    #     b_y1 = box_coord[0][0]
-    #     b_x2 = box_coord[1][1]
-    #     b_y2 = box_coord[1][0]
-    #
-    #     l_x1 = line_coord[0][1]
-    #     l_y1 = line_coord[0][0]
-    #     l_x2 = line_coord[1][1]
-    #     l_y2 = line_coord[1][0]
-    #
-    #     y_max = max(l_y1, l_y2)
-    #     y_min = min(l_y1, l_y2)
-    #
-    #     k = kb[0]
-    #     b = kb[1]
-    #
-    #     if k == 0:
-    #         k += 0.00001
-    #
-    #     test_start = not ((l_x2 < b_x1) or (l_x1 > b_x2) or (y_max < b_y1) or (y_min > b_y2))
-    #     test_finalle = 0
-    #
-    #     if test_start:
-    #
-    #         if (l_x1 <b_x1 < l_x2):
-    #
-    #             iter_1_y = k * b_x1 + b
-    #             test_1 = y_min < iter_1_y < y_max
-    #             test_2 = b_y1 < iter_1_y < b_y2
-    #             if test_1 and test_2:
-    #                 test_finalle += 1
-    #         if (l_x1 < b_x2 < l_x2) and test_finalle==0:
-    #
-    #             iter_1_y = k * b_x2 + b
-    #
-    #             test_1 = y_min < iter_1_y < y_max
-    #             test_2 = b_y1 < iter_1_y < b_y2
-    #             if test_1 and test_2:
-    #                 test_finalle += 1
-    #
-    #         if (y_min < b_y1 < y_max)  and test_finalle==0:
-    #
-    #             iter_3_x = (b_y1 - b) / k
-    #
-    #             test_1 = l_x1 < iter_3_x < l_x2
-    #             test_2 = b_x1 < iter_3_x < b_x2
-    #             if test_1 and test_2:
-    #                 test_finalle += 1
-    #
-    #         if (y_min < b_y2 < y_max) and test_finalle==0:
-    #
-    #             iter_3_x = (b_y2 - b) / k
-    #
-    #             test_1 = l_x1 < iter_3_x < l_x2
-    #             test_2 = b_x1 < iter_3_x < b_x2
-    #             if test_1 and test_2:
-    #                 test_finalle += 1
-    #     if test_finalle > 0:
-    #         return 1
-    #     else:
-    #         return 0
+
 
     def vinoska_and_box(kb, line_coord, box_coord):
 
@@ -342,18 +248,14 @@ def genetic_generator_loop(size_of_list, k, k_kompress, data_box):
 
     def boxFitness(individual):
         # print(__name__)
-
-
         box_coord = []
         line_coord = []
         k_b = []
         box_dirt = 0
         diapas_for_line = []
         lenght_y = []
-
         lenght_x = []
-        # dumm_line = 0
-        # -----------------ЦИКЛ 1----------------
+
         coordinates = np.reshape(individual, (-1, 3))
         start_c1 = time.time()
         for boxes_array_item, coordinates_item in zip(boxes_array, coordinates):
@@ -361,73 +263,31 @@ def genetic_generator_loop(size_of_list, k, k_kompress, data_box):
             box_coord.append(cc)
             cl = correct_vector(boxes_array_item.obj_dot, [coordinates_item[0], coordinates_item[1]], boxes_array_item.sizeofbox)
             line_coord.append(cl)
-            # kb = k_find(cl)
             k_b.append(k_find(cl))
-            # super_pl = 0
-            # box_dirt += np.sum(Rectangle_callout.image[cc[0][0]:cc[1][0], cc[0][1]:cc[1][1]])
-
-
             diapas_for_line.append([[min(cl[0][0], cl[1][0]) - scale_step_int, cl[0][1] - scale_step_int],
                                     [max(cl[0][0], cl[1][0]) + scale_step_int,
                                      cl[1][1] + scale_step_int]])  # [[y_min, x_min], [y_max, x_max]]
-
             lenght_y.append(abs(cl[0][0] - cl[1][0]))
-            # lenght_x.append(cl[1][1] - cl[0][1])
-
             lenght_x.append(abs(cl[0][1] - cl[1][1]))
         end_c1 = time.time()
-
         global time_cikl_1
-
         time_cikl_1 += (end_c1 - start_c1)
-
-
-
-
-
-            # ploshadka = np.copy(k[min(boxes_array[i].obj_dot[0], coordinates[i][0]): max(boxes_array[i].obj_dot[0], coordinates[i][0]), min(boxes_array[i].obj_dot[1], coordinates[i][1]): max(boxes_array[i].obj_dot[1], coordinates[i][1])])
-            #
-            # min_y = int(math.floor(0.2*lenght_y[i]))
-            # max_y = int(math.ceil(0.8*lenght_y[i]))
-            # min_x = int(math.floor(0.2*lenght_x[i]))
-            # max_x = int(math.ceil(0.8*lenght_x[i]))
-            #
-            #
-            #
-            #
-            # test_pl = np.sum(ploshadka[min_y:max_y, min_x:max_x])
-            # # print(f"test_pl = {test_pl}")
-            # if test_pl>9:
-            #     super_pl+=1
-
         square = 0
         lines = 0
         l_and_b = 0
-
         start_c2 = time.time()
 
         for i in range(global_counter-1):
-
             for j in range(i+1, global_counter):
-
-
                 t = find_s(box_coord[i], box_coord[j])
                 if t > 0:
                     square += 1
-
                 lines += diag_line_detect(k_b[i], k_b[j], diapas_for_line[i], diapas_for_line[j])
         end_c2 = time.time()
         global time_cikl_2
-
         time_cikl_2 += (end_c2 - start_c2)
-
-
-        # for i in range(Rectangle_callout.counter):
-        #     for j in range(Rectangle_callout.counter):
-        #
-        #             l_and_b += vinoska_and_box(k_b[i], line_coord[i], box_coord[j])
-
         start_c3 = time.time()
+
         for k_b_item, line_coord_item in zip(k_b, line_coord):
             for box_coord_item in box_coord:
         #
@@ -438,30 +298,6 @@ def genetic_generator_loop(size_of_list, k, k_kompress, data_box):
 
         time_cikl_3 += (end_c3 - start_c3)
 
-
-        # for i in range(Rectangle_callout.counter):
-        #     for j in range(Rectangle_callout.counter):
-        #         # if i !=j:
-        #         if i < j:
-        #
-        #
-        #             t = find_s(box_coord[i], box_coord[j])
-        #             if t > 0:
-        #                 square += 1
-        #
-        #             tt = diag_line_detect(k_b[i], k_b[j], diapas_for_line[i], diapas_for_line[j])
-        #             lines += tt
-        #
-        #         ttt = vinoska_and_box(k_b[i], line_coord[i], box_coord[j])
-        #         l_and_b += ttt
-
-        # s = square + lines + l_and_b + box_dirt + (np.mean(lenght_y))/(2*r_max_convert) + (np.mean(lenght_x))/(
-        # 2*r_max_convert)
-
-        # s = square + lines + l_and_b + box_dirt
-
-        # s = square + lines + l_and_b + box_dirt + ((abs(np.mean(lenght_y) - np.mean(lenght_x))) + np.mean(lenght_y) + np.mean(lenght_x))/(3*r_max_convert)
-
         mean_lenght_y = np.mean(lenght_y)
         mean_lenght_x = np.mean(lenght_x)
 
@@ -470,49 +306,25 @@ def genetic_generator_loop(size_of_list, k, k_kompress, data_box):
         s = (square + lines + l_and_b + box_dirt) * 700 + math.ceil(
             (radius_mean) / (r_max_convert) * 100) + \
             (max(mean_lenght_y, mean_lenght_x) / min(mean_lenght_y, mean_lenght_x) - 1) * 30
-
-        # s = (square + lines + l_and_b + box_dirt)
-
-        # s = (square + lines + l_and_b + box_dirt) * 1000 + math.ceil((np.mean(lenght_y) + np.mean(lenght_x)) / (2 * r_max_convert) * 200)
-
-        # s = (square + lines + l_and_b + box_dirt)*1000 + (max(np.mean(lenght_y),np.mean(lenght_x))/min(np.mean(lenght_y),np.mean(lenght_x))-1)*10
-
         return s,
 
     def crossingover_box(ind1, ind2):
-        # print("mate")
         place = random.randrange(3, global_counter, 3)
         ind1[place:], ind2[place:] = ind2[place:], ind1[place:]
-
         return ind1, ind2
-
-
 
     def mutBox(individual, indpb):
         start_m1 = time.time()
-
-
         for i in range(len(individual)):
             if i % 3 == 0:
-
-
-                # print("mutation")
-
                 if random.random() < indpb:
                     coordinate = boxes_array[int(i / 3)].coordinate_base_generator()
-
                     individual[i] = coordinate[0]
-
                     individual[i + 1] = coordinate[1]
-
                     individual[i + 2] = coordinate[2]
-
-                # print(coordinate[0],individual[i + 1],individual[i + 2] )\
         end_m1 = time.time()
         global time_mut_1
         time_mut_1 += (end_m1 - start_m1)
-
-
         return individual,
 
     toolbox.register("evaluate", boxFitness)
@@ -520,12 +332,9 @@ def genetic_generator_loop(size_of_list, k, k_kompress, data_box):
     # toolbox.register("mate", tools.cxTwoPoint)
     toolbox.register("mate", crossingover_box)
     toolbox.register("mutate", mutBox, indpb=P_MUTATION)
-
     stats = tools.Statistics(lambda ind: ind.fitness.values)
     stats.register("min", np.min)
     stats.register("avg", np.mean)
-
-    # stats.register("ttt", "np.mean")
 
     population, logbook = algelitism.eaSimpleElitism(population, toolbox,
                                                      cxpb=P_CROSSOVER,
@@ -534,20 +343,6 @@ def genetic_generator_loop(size_of_list, k, k_kompress, data_box):
                                                      halloffame=hof,
                                                      stats=stats,
                                                      verbose=True)
-
-    # maxFitnessValues, meanFitnessValues = logbook.select("min", "avg")
-    # end = time.time()
-    # print(end - start)
-
-    # print("++++++++++++++++++++++++++++++++++++++++++")
-    # print(f"Время работы первого цикла равна {time_cikl_1}")
-    # print(f"Время работы второго цикла равна {time_cikl_2}")
-    # print(f"Время работы третьего цикла равна {time_cikl_3}")
-    # print(f"Время работы мутации {time_mut_1}")
-    #
-    # print("++++++++++++++++++++++++++++++++++++++++++")
-
-
     def diag_line_detect_for_show(kb_1, kb_2, l1, l2, i1, i2):
         # print()
 
@@ -568,33 +363,6 @@ def genetic_generator_loop(size_of_list, k, k_kompress, data_box):
 
         test2 = (min(l1[0][0], l1[1][0]) - SCALE_STEP <= y <= max(l1[0][0], l1[1][0]) + SCALE_STEP) and (
                 min(l2[0][0], l2[1][0]) - SCALE_STEP <= y <= max(l2[0][0], l2[1][0]) + SCALE_STEP)
-
-        # print(f"Параметры для линии {i1}:")
-        # print(f"k =  {k1}")
-        # print(f"b =  {b1}")
-        # print(f"Параметры линии исходные [[y1, x1], [y2, x2]] =  {l1}")
-        # print()
-        #
-        # print(f"Параметры для линии {i2}:")
-        # print(f"k =  {k2}")
-        # print(f"b =  {b2}")
-        # print(f"Параметры линии исходные [[y1, x1], [y2, x2]] =  {l2}:")
-        #
-        # print()
-        #
-        # print(f"x = (b2 - b1) / (k1 - k2) = ({b2} - {b1}) / ({k1} - {k2}) = {x}")
-        # print(f"y = k2 * x + b2 = k2 * x + b2 = {y}")
-        #
-        # print()
-        #
-        # print(f"test1 = (l1[0][1] <= x <= l1[1][1]) and (l2[0][1] <= x <= l2[1][1])")
-        # print(f"test1 = ({l1[0][1]} <= {x} <= {l1[1][1]}) and ({l2[0][1]} <= {x} <= {l2[1][1]})")
-        # print(
-        #     f"test2 = (min(l1[0][0], l1[1][0]) <= y <= max(l1[0][0], l1[1][0])) and (min(l2[0][0], l2[1][0]) <= y <= max(l2[0][0], l2[1][0]))")
-        # print(
-        #     f"test2 = {min(l1[0][0], l1[1][0])} <= {y} <= {max(l1[0][0], l1[1][0])} and {min(l2[0][0], l2[1][0])} <= {y} <= {max(l2[0][0], l2[1][0])}")
-        # print(f"test1 and test2")
-        # print(f"{test1} and {test2}")
 
         if test1 and test2:
             return 1
@@ -717,7 +485,6 @@ def genetic_generator_loop(size_of_list, k, k_kompress, data_box):
     #     pass
 
     result = []
-
     coordinate_best = np.reshape(hof.items[0], (-1, 3))
 
     for i in range(len(coordinate_best)):
@@ -742,9 +509,6 @@ def genetic_generator_loop(size_of_list, k, k_kompress, data_box):
                            # "LeaderElbow_U": coordinate_best[0][0],
                            # "LeaderElbow_V": coordinate_best[0][1]})
 
-
-
     print(result)
-
     return result
-    # Rectangle_callout.counter += 1
+
