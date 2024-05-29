@@ -113,7 +113,6 @@ def image_generator(img, sheet_height, scale_step, sheet_width):
 
 
 def line_creatot(y_size, x_size, scale, penny):
-
     if math.isclose(y_size, 0, abs_tol=1*2):
         y_size +=2
     if x_size == 0:
@@ -122,13 +121,12 @@ def line_creatot(y_size, x_size, scale, penny):
     c = np.zeros((y_size, x_size))
     for i in range(y_size):
         for j in range(x_size):
-            right = y_size / x_size * j
 
+            right = y_size / x_size * j
             right_2 = i / y_size * x_size
+
             if math.isclose(i, right, abs_tol=scale) or math.isclose(j, right_2, abs_tol=scale):
                 c[i][j]=penny
-
-
 
     return c, y_size,x_size
 

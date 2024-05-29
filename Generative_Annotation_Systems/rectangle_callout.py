@@ -7,9 +7,6 @@ import math
 
 import random
 
-
-
-
 class Rectangle_callout():
     # counter = 0
     # size_of_list = (100, 100)
@@ -17,6 +14,9 @@ class Rectangle_callout():
     r_line = 2
     R_line = 5
     scale = 1
+
+
+
     # image_compress = []
     # image = []
 
@@ -28,19 +28,35 @@ class Rectangle_callout():
         self.size_of_list = size_of_list
         self.image = image
         self.image_compress = image_compress
-
         self.box_zone = np.ones(sizeofbox) * 3
         self.box_zone[1:sizeofbox[0]-1, 1:sizeofbox[1]-1] = 3
-
+        self.box_width_zero = self.zero_centers()
         # self.slise_right, self.slise_left, self.slise_y = self.scale_for_circle()
         self.slise_left,self.slise_right, self.slise_y = self.scale_for_circle()
         # self.zone_for_plant_right, self.zone_for_plant_left = self.circle_zone_generator()
 
         self.zone_for_plant_left, self.zone_for_plant_right = self.circle_zone_generator()
 
+
+
+
         # Rectangle_callout.counter += 1
 
         # def circle(y, x, a, b, R, r, s, h, w):
+
+    def zero_centers(self):
+        test_img = np.copy(self.image)
+        # y = len(image)
+        # x = len(image[0])
+
+        for i in range(self.obj_dot[0] - 4, self.obj_dot[0] + 4):
+            for j in range(self.obj_dot[1] - 4, self.obj_dot[1] + 4):
+                try:
+                    test_img[i][j] = 0
+                except:
+                    pass
+
+        return test_img
 
     def scale_for_circle(self):
         m_for_left = np.copy(self.image_compress)+np.copy(self.image)
@@ -51,14 +67,11 @@ class Rectangle_callout():
         m_for_left3 = np.copy(m_for_left)
         m_for_right3 = np.copy(m_for_right)
 
-
         for i in range(self.sizeofbox[1]):
             m_for_left[0:size_y, i:size_x] += m_for_left3[0:size_y, 0:size_x - i]# картинка двигается вправо
             m_for_right[0:size_y, 0:size_x - i] += m_for_right3[0:size_y, i:size_x]# картинка двигается вдево
-
         m_for_left2 = np.copy(m_for_left)
         m_for_right2 = np.copy(m_for_right)
-
 
         for i in range(self.sizeofbox[0]):  # картинка двигается вправо
             m_for_y[0:size_y - i, 0:size_x] += self.image_compress[i:size_y, 0:size_x]
@@ -83,8 +96,6 @@ class Rectangle_callout():
                     tester = 1
                 else:
                     tester = 0
-
-
         return tester
 
     @staticmethod
@@ -130,57 +141,65 @@ class Rectangle_callout():
         self.zone_for_plant_left = []
         self.zone_for_plant_right = []
 
-        # for i in range(2+self.obj_dot[0] - self.R_line, self.obj_dot[0] + self.R_line-2):
+        for i in range(2+self.obj_dot[0] - self.R_line, self.obj_dot[0] + self.R_line-2):
+
+            for j in range(2+self.obj_dot[1] - self.R_line, self.obj_dot[1] + self.R_line-2):
+                try:
+                    test_polog = i>0 and j>0
+
+                    k_l[i][j] = self.dd_tube(k_l[i][j])
+                    k_r[i][j] = self.dd_tube(k_r[i][j])
+
+
+                    if k_r[i][j] == 0 and test_polog:
+                        k_r[i][j] += self.circle_right(i, j, self.obj_dot, Rectangle_callout.R_line,
+                                                       Rectangle_callout.r_line, self.sizeofbox, self.size_of_list)
+                    if (k_r[i][j] == 1) and test_polog:
+                        self.zone_for_plant_right.append([i, j])
+
+
+
+
+                    if k_l[i][j] == 0 and test_polog:
+                        k_l[i][j] += self.circle_left(i, j, self.obj_dot, Rectangle_callout.R_line,
+                                               Rectangle_callout.r_line, self.sizeofbox, self.size_of_list)
+
+                    if (k_l[i][j] == 1) and test_polog:
+                        self.zone_for_plant_left.append([i, j])
+                except:
+                    pass
+
+        # for i in range(self.size_of_list[0]):
         #
-        #     for j in range(2+self.obj_dot[1] - self.R_line, self.obj_dot[1] + self.R_line-2):
-        #         try:
+        #     for j in range(self.size_of_list[1]):
         #
-        #             k_l[i][j] = self.dd_tube(k_l[i][j])
-        #             k_r[i][j] = self.dd_tube(k_r[i][j])
+        #         k_l[i][j] = self.dd_tube(k_l[i][j])
+        #         k_r[i][j] = self.dd_tube(k_r[i][j])
         #
+        #         if k_r[i][j] == 0:
+        #             k_r[i][j] += self.circle_right(i, j, self.obj_dot, Rectangle_callout.R_line,
+        #                                            Rectangle_callout.r_line, self.sizeofbox, self.size_of_list)
+        #         if (k_r[i][j] == 1):
+        #             self.zone_for_plant_right.append([i, j])
         #
-        #             if k_r[i][j] == 0:
-        #                 k_r[i][j] += self.circle_right(i, j, self.obj_dot, Rectangle_callout.R_line,
-        #                                                Rectangle_callout.r_line, self.sizeofbox, self.size_of_list)
-        #             if (k_r[i][j] == 1):
-        #                 self.zone_for_plant_right.append([i, j])
+        #         if k_l[i][j] == 0:
+        #             k_l[i][j] += self.circle_left(i, j, self.obj_dot, Rectangle_callout.R_line,
+        #                                    Rectangle_callout.r_line, self.sizeofbox, self.size_of_list)
         #
+        #         if (k_l[i][j] == 1):
+        #             self.zone_for_plant_left.append([i, j])
+
+        # fig1111 = plt.figure()
         #
+        # plt.pcolor(k_l, cmap="plasma", edgecolors='k')
+        # plt.colorbar()
+
+        # fig1 = plt.figure()
         #
-        #
-        #             if k_l[i][j] == 0:
-        #                 k_l[i][j] += self.circle_left(i, j, self.obj_dot, Rectangle_callout.R_line,
-        #                                        Rectangle_callout.r_line, self.sizeofbox, self.size_of_list)
-        #
-        #             if (k_l[i][j] == 1):
-        #                 self.zone_for_plant_left.append([i, j])
-        #         except:
-        #             pass
+        # plt.imshow(np.array(k_r), cmap="gray")
+        # plt.colorbar()
 
-        for i in range(self.size_of_list[0]):
-
-            for j in range(self.size_of_list[1]):
-
-                k_l[i][j] = self.dd_tube(k_l[i][j])
-                k_r[i][j] = self.dd_tube(k_r[i][j])
-
-
-                if k_r[i][j] == 0:
-                    k_r[i][j] += self.circle_right(i, j, self.obj_dot, Rectangle_callout.R_line,
-                                                   Rectangle_callout.r_line, self.sizeofbox, self.size_of_list)
-                if (k_r[i][j] == 1):
-                    self.zone_for_plant_right.append([i, j])
-
-
-
-
-                if k_l[i][j] == 0:
-                    k_l[i][j] += self.circle_left(i, j, self.obj_dot, Rectangle_callout.R_line,
-                                           Rectangle_callout.r_line, self.sizeofbox, self.size_of_list)
-
-                if (k_l[i][j] == 1):
-                    self.zone_for_plant_left.append([i, j])
-
+        # plt.show()
 
         return self.zone_for_plant_left, self.zone_for_plant_right
 
@@ -188,7 +207,7 @@ class Rectangle_callout():
 
         random_spec = random.randint(0, 1)
         coordinate_base = []
-        if random_spec == 0:#ОТРАЗИТЬ!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        if random_spec == 0 and self.zone_for_plant_right != []:#ОТРАЗИТЬ!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
             coordinate_base = random.choice(self.zone_for_plant_right)
         else:
             coordinate_base = random.choice(self.zone_for_plant_left)
@@ -271,4 +290,3 @@ class Rectangle_callout():
         zero[y_plant[0]:y_plant[1], x_plant[0]:x_plant[1]] += line_array
 
         return zero, abs(y_line / x_line), y_line, x_line
-

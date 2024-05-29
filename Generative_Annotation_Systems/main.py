@@ -14,17 +14,6 @@ from Image_constructor import image_generator_devide
 from multiprocessing import Pool, Manager, Process
 
 
-
-def dots_to_segment_coordinates(array_dots, V_start, U_start, scale_conv, optimaze_k):
-   for item in array_dots:
-      item["Height"] = np.around(np.divide(item["Width"]*scale_conv,optimaze_k * 2.2)).astype(int)
-      item["Width"] = np.around(np.divide(item["Height"] * scale_conv,optimaze_k * 2.2)).astype(int)
-      item["LeaderEnd_V"] = np.ceil(np.divide((item["LeaderEnd_V"] - V_start)  * scale_conv,optimaze_k)).astype(int)
-      item["LeaderEnd_U"] = np.ceil(np.divide((item["LeaderEnd_U"] - U_start) * scale_conv,optimaze_k)).astype(int)
-
-   return array_dots
-
-
 app = FastAPI()
 
 
@@ -56,12 +45,11 @@ def generative(arg):
 
 def generative_process(arg, return_dict):
 
+   result = arg.generator()
    print("Флаг main/generative_process")
-   result = genetic_generator_loop(arg[0], arg[1], arg[2], arg[3])
+   # result = genetic_generator_loop(arg[0], arg[1], arg[2], arg[3])
    print("Флаг main/generative_process")
-
    return_dict[random.randint(1000000, 9999999)] = result
-
    return result
 
 """
@@ -120,54 +108,51 @@ def calculation_part(separation, V_min, V_max, U_min, U_max, sheet_scale_convert
 @app.post("/data")
 async def data(
       scrFile: UploadFile = File(...),
-
       jsFile: UploadFile = File(...)
    ):
 
-   pool_genetic = Pool(3)
-
-   box_for_separate = (2,1)
-
    data = json.load(jsFile.file)
-
    img = Image.open(scrFile.file)
-
    dots= deserial_funk_for_class(data)
-
-   Segment.scale_sheet = dots["Scale"]
-
    sheet_scale_convert = FT_TO_MM / Segment.scale_sheet
 
    print(dots)
 
    dots_V = []
+   dots_U = []
 
    for item in dots['Boxes_list']:
-
       dots_V.append(item["LeaderEnd_V"])
+      dots_U.append(item["LeaderEnd_U"])
+
+   # avarage_V = np.mean(dots_V)
+   # V_bottom_segment_lenght = avarage_V - dots["BottomLeft_V"]
+   # coordinate_V_top_segment = avarage_V
+   #
+   # avarage_V = np.mean(dots_V)
+   # V_bottom_segment_lenght = avarage_V - dots["BottomLeft_V"]
+   # coordinate_V_top_segment = avarage_V
 
    avarage_V = np.mean(dots_V)
-
    V_bottom_segment_lenght = avarage_V - dots["BottomLeft_V"]
-
    coordinate_V_top_segment = avarage_V
 
-   lenght_V = dots["TopRight_V"] - dots["BottomLeft_V"]
+   avarage_U = np.mean(dots_U)
+   U_bottom_segment_lenght = avarage_U - dots["BottomLeft_U"]
+   coordinate_U_top_segment = avarage_U
 
+   lenght_V = dots["TopRight_V"] - dots["BottomLeft_V"]
    lenght_U = dots["TopRight_U"] - dots["BottomLeft_U"]
 
    # lenght_V_segment = lenght_V/2
 
    lenght_V_on_list = lenght_V * sheet_scale_convert
-
    lenght_U_on_list = lenght_U * sheet_scale_convert
 
    lenght_V_img = np.around(np.divide(lenght_V_on_list, SCALE_STEP)).astype(int)
-
    lenght_U_img = np.around(np.divide(lenght_U_on_list, SCALE_STEP)).astype(int)
 
    lenght_V_bt_sg_img = np.around(np.divide(V_bottom_segment_lenght * sheet_scale_convert, SCALE_STEP)).astype(int)
-
    lenght_V_tp_sg_img = lenght_V_img - lenght_V_bt_sg_img
 
    img_full, img_full_compress = image_generator_devide(img, lenght_V_img, SCALE_STEP, lenght_U_img)
@@ -178,38 +163,29 @@ async def data(
                                                                                      lenght_V_bt_sg_img:lenght_V_img,
                                                                                      0:lenght_U_img]
 
-   # fig4 = plt.figure()
-   # plt.pcolor(img_bottom, cmap="cool", edgecolors='k')
-   # plt.colorbar()
-   #
-   # fig5 = plt.figure()
-   # plt.pcolor(img_top, cmap="cool", edgecolors='k')
-   # plt.colorbar()
-   #
-   # plt.show()
+   segment_bottom = Segment(dots["BottomLeft_V"], dots["BottomLeft_U"], coordinate_V_top_segment, dots["TopRight_U"],
+                            img_bottom, img_compress_bottom, lenght_V_bt_sg_img, lenght_U_img,
+                            scale_conv = sheet_scale_convert, optimaze_k=SCALE_STEP)
 
-   array_bt_sg = sort_dots(dots["BottomLeft_V"], dots["BottomLeft_U"], coordinate_V_top_segment, dots["TopRight_U"],
-                           dots["Boxes_list"])
-   array_tp_sg = sort_dots(coordinate_V_top_segment, dots["BottomLeft_U"], dots["TopRight_V"], dots["TopRight_U"],
-                           dots["Boxes_list"])
+   segment_top = Segment(coordinate_V_top_segment, dots["BottomLeft_U"], dots["TopRight_V"], dots["TopRight_U"],
+                         img_top, img_compress_top, lenght_V_tp_sg_img, lenght_U_img,
+                         scale_conv = sheet_scale_convert, optimaze_k=SCALE_STEP)
 
-   array_convert_dots_bt = dots_to_segment_coordinates(array_bt_sg, dots["BottomLeft_V"], dots["BottomLeft_U"],
-                                                        sheet_scale_convert, SCALE_STEP)
+   segment_bottom.dot_sort(dots["Boxes_list"])
 
-   array_convert_dots_tp = dots_to_segment_coordinates(array_tp_sg, coordinate_V_top_segment, dots["BottomLeft_U"],
-                                                       sheet_scale_convert, SCALE_STEP)
+   segment_top.dot_sort(dots["Boxes_list"])
 
-   result = []
-   result1 = [(lenght_V_bt_sg_img, lenght_U_img), img_bottom, img_compress_bottom, array_convert_dots_bt]
+   segment_bottom.dots_to_segment_coordinates()
 
-   result2 = [(lenght_V_tp_sg_img, lenght_U_img), img_top, img_compress_top, array_convert_dots_tp]
+   segment_top.dots_to_segment_coordinates()
 
    res = []
-   if array_convert_dots_bt != []:
-      res.append(result1)
 
-   if array_convert_dots_tp != []:
-      res.append(result2)
+   # if array_convert_dots_bt != []:
+   #    res.append(result1)
+   #
+   # if array_convert_dots_tp != []:
+   #    res.append(result2)
 
    print("Флаг main 1")
 
@@ -221,9 +197,9 @@ async def data(
    print("создали возвращающий dict")
    return_dict = manager.dict()
    print("создали p1")
-   p1 = Process(target=generative_process, args=(result1, return_dict))
+   p1 = Process(target=generative_process, args=(segment_bottom, return_dict))
    print("создали p2")
-   p2 = Process(target=generative_process, args=(result2, return_dict))
+   p2 = Process(target=generative_process, args=(segment_top, return_dict))
 
    p1.start()
    print("старт p2")
@@ -247,29 +223,178 @@ async def data(
 
    otvet = []
 
-   for item in result[0]:
-      otvet1 = {}
-      otvet1["V"] = dots["BottomLeft_V"]+item["V"]*SCALE_STEP/sheet_scale_convert
-      otvet1["U"] = dots["BottomLeft_U"] + item["U"] * SCALE_STEP / sheet_scale_convert
+   dict_array = {}
 
-      otvet1["LeaderElbow_U"] = dots["BottomLeft_U"] + item["LeaderElbow_U"] * SCALE_STEP / sheet_scale_convert
-      otvet1["LeaderElbow_V"] = dots["BottomLeft_V"] + item["LeaderElbow_V"] * SCALE_STEP / sheet_scale_convert
-
-      otvet1["TagId"] = item["TagId"]
-      otvet.append(otvet1)
-
-
-   for item in result[1]:
-      otvet2 = {}
-      otvet2["V"] = coordinate_V_top_segment+item["V"]*SCALE_STEP/sheet_scale_convert
-      otvet2["U"] = dots["BottomLeft_U"] + item["U"] * SCALE_STEP / sheet_scale_convert
-
-      otvet2["LeaderElbow_U"] = dots["BottomLeft_U"] + item["LeaderElbow_U"] * SCALE_STEP / sheet_scale_convert
-      otvet2["LeaderElbow_V"] = coordinate_V_top_segment + item["LeaderElbow_V"] * SCALE_STEP / sheet_scale_convert
-
-      otvet2["TagId"] = item["TagId"]
-      otvet.append(otvet2)
 
 
    print("Флаг 2")
-   return (json.dumps(otvet))
+   print("*******************************************************")
+   print(result[0])
+   print("*******************************************************")
+   print(result[1])
+   print("*******************************************************")
+   print("*******************************************************")
+   print(result)
+   print("*******************************************************")
+   return json.dumps(result[0]+result[1])
+
+# @app.post("/da2ta")
+# async def da2ta(
+#       scrFile: UploadFile = File(...),
+#
+#       jsFile: UploadFile = File(...)
+#    ):
+#
+#    # pool_genetic = Pool(3)
+#    #
+#    # box_for_separate = (2,1)
+#
+#    data = json.load(jsFile.file)
+#    img = Image.open(scrFile.file)
+#    dots= deserial_funk_for_class(data)
+#
+#
+#    sheet_scale_convert = FT_TO_MM / Segment.scale_sheet
+#
+#    print(dots)
+#
+#    dots_V = []
+#
+#    for item in dots['Boxes_list']:
+#       dots_V.append(item["LeaderEnd_V"])
+#    avarage_V = np.mean(dots_V)
+#
+#    V_bottom_segment_lenght = avarage_V - dots["BottomLeft_V"]
+#
+#    coordinate_V_top_segment = avarage_V
+#
+#    lenght_V = dots["TopRight_V"] - dots["BottomLeft_V"]
+#
+#    lenght_U = dots["TopRight_U"] - dots["BottomLeft_U"]
+#
+#    # lenght_V_segment = lenght_V/2
+#
+#    lenght_V_on_list = lenght_V * sheet_scale_convert
+#    lenght_U_on_list = lenght_U * sheet_scale_convert
+#    lenght_V_img = np.around(np.divide(lenght_V_on_list, SCALE_STEP)).astype(int)
+#    lenght_U_img = np.around(np.divide(lenght_U_on_list, SCALE_STEP)).astype(int)
+#    lenght_V_bt_sg_img = np.around(np.divide(V_bottom_segment_lenght * sheet_scale_convert, SCALE_STEP)).astype(int)
+#    lenght_V_tp_sg_img = lenght_V_img - lenght_V_bt_sg_img
+#
+#    img_full, img_full_compress = image_generator_devide(img, lenght_V_img, SCALE_STEP, lenght_U_img)
+#
+#    img_bottom, img_compress_bottom = img_full[0:lenght_V_bt_sg_img, 0:lenght_U_img], img_full_compress[0:lenght_V_bt_sg_img, 0:lenght_U_img]
+#
+#    img_top, img_compress_top = img_full[lenght_V_bt_sg_img:lenght_V_img, 0:lenght_U_img], img_full_compress[
+#                                                                                      lenght_V_bt_sg_img:lenght_V_img,
+#                                                                                      0:lenght_U_img]
+#    segment_bottom = Segment(dots["BottomLeft_V"], dots["BottomLeft_U"], coordinate_V_top_segment, dots["TopRight_U"])
+#
+#    segment_top = Segment()
+#
+#    # fig4 = plt.figure()
+#    # plt.pcolor(img_bottom, cmap="cool", edgecolors='k')
+#    # plt.colorbar()
+#    #
+#    # fig5 = plt.figure()
+#    # plt.pcolor(img_top, cmap="cool", edgecolors='k')
+#    # plt.colorbar()
+#    #
+#    # plt.show()
+#
+#    array_bt_sg = sort_dots(dots["BottomLeft_V"], dots["BottomLeft_U"], coordinate_V_top_segment, dots["TopRight_U"],
+#                            dots["Boxes_list"])
+#    array_tp_sg = sort_dots(coordinate_V_top_segment, dots["BottomLeft_U"], dots["TopRight_V"], dots["TopRight_U"],
+#                            dots["Boxes_list"])
+#
+#    array_convert_dots_bt = dots_to_segment_coordinates(array_bt_sg, dots["BottomLeft_V"], dots["BottomLeft_U"],
+#                                                         sheet_scale_convert, SCALE_STEP)
+#
+#    array_convert_dots_tp = dots_to_segment_coordinates(array_tp_sg, coordinate_V_top_segment, dots["BottomLeft_U"],
+#                                                        sheet_scale_convert, SCALE_STEP)
+#
+#    result = []
+#    result1 = [(lenght_V_bt_sg_img, lenght_U_img), img_bottom, img_compress_bottom, array_convert_dots_bt, "bt"]
+#
+#    result2 = [(lenght_V_tp_sg_img, lenght_U_img), img_top, img_compress_top, array_convert_dots_tp, "tp"]
+#
+#    res = []
+#    if array_convert_dots_bt != []:
+#       res.append(result1)
+#
+#    if array_convert_dots_tp != []:
+#       res.append(result2)
+#
+#    print("Флаг main 1")
+#
+#    start_rasch = time.time()
+#    print("Флаг main 2")
+#
+#    print("создали менеджер")
+#    manager = Manager()
+#    print("создали возвращающий dict")
+#    return_dict = manager.dict()
+#    print("создали p1")
+#    p1 = Process(target=generative_process, args=(result1, return_dict))
+#    print("создали p2")
+#    p2 = Process(target=generative_process, args=(result2, return_dict))
+#
+#    p1.start()
+#    print("старт p2")
+#    p2.start()
+#    print("джоин p1")
+#    p1.join()
+#    print("джоин p2")
+#    p2.join()
+#    print("proc закончился")
+#
+#    result = return_dict.values()
+#    #
+#    # with Pool(2) as pool:
+#    #    result = pool.map(generative, res)
+#
+#    print("Флаг main 3")
+#    end_rasch = time.time()
+#    print("Флаг main 4")
+#    print(f"На генерацию ушло {end_rasch - start_rasch}")
+#    print("Флаг main 5")
+#
+#    otvet = []
+#
+#    dict_array = {}
+#    dict_array
+#
+#    # for item in result[0]:
+#    #
+#    #    otvet1 = {}
+#    #    otvet1["V"] = dots["BottomLeft_V"]+item["V"]*SCALE_STEP/sheet_scale_convert
+#    #    otvet1["U"] = dots["BottomLeft_U"] + item["U"] * SCALE_STEP / sheet_scale_convert
+#    #
+#    #    otvet1["LeaderElbow_U"] = dots["BottomLeft_U"] + item["LeaderElbow_U"] * SCALE_STEP / sheet_scale_convert
+#    #    otvet1["LeaderElbow_V"] = dots["BottomLeft_V"] + item["LeaderElbow_V"] * SCALE_STEP / sheet_scale_convert
+#    #
+#    #    otvet1["TagId"] = item["TagId"]
+#    #    otvet.append(otvet1)
+#    #
+#    #
+#    # for item in result[1]:
+#    #    otvet2 = {}
+#    #    otvet2["V"] = coordinate_V_top_segment+item["V"]*SCALE_STEP/sheet_scale_convert
+#    #    otvet2["U"] = dots["BottomLeft_U"] + item["U"] * SCALE_STEP / sheet_scale_convert
+#    #
+#    #    otvet2["LeaderElbow_U"] = dots["BottomLeft_U"] + item["LeaderElbow_U"] * SCALE_STEP / sheet_scale_convert
+#    #    otvet2["LeaderElbow_V"] = coordinate_V_top_segment + item["LeaderElbow_V"] * SCALE_STEP / sheet_scale_convert
+#    #
+#    #    otvet2["TagId"] = item["TagId"]
+#    #    otvet.append(otvet2)
+#
+#
+#    print("Флаг 2")
+#    return (json.dumps(otvet))
+
+
+
+@app.post("/test")
+async def testtest():
+   hello = "Hello, world (annotation)!"
+   return (json.dumps(hello))

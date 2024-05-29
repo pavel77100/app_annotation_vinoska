@@ -64,24 +64,10 @@ def original_size(V_start, U_start, scale_sheet, data):
 
     sheet_scale_convert = FT_TO_MM/scale_sheet
 
-    # corrdinate_zero = ((data["TopRight"]["V"]*sheet_scale_convert), data["TopRight"]["U"]*sheet_scale_convert)
-    # size_screen = ((data["TopRight"]["V"] - data["BottomLeft"]["V"])*sheet_scale_convert,
-    #                (data["TopRight"]["U"] - data["BottomLeft"]["U"])*sheet_scale_convert)
-    #
-    # print(f'data["BottomLeft"]["V"]{data["BottomLeft"]["V"]}')
-    # print(f'data["BottomLeft"]["U"]{data["BottomLeft"]["U"]}')
-    # print(f'data["TopRight"]["V"]{data["TopRight"]["V"]}')
-    # print(f'data["TopRight"]["U"]{data["TopRight"]["U"]}')
-
-
     y0 = V_start
     x0 = U_start
-
-
     # print(size_screen)
     boxes = []
-
-
 
     for item in data["Boxes_list"]:
         data = {}
