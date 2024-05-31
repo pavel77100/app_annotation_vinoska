@@ -10,7 +10,7 @@ class Segment():
     sheet_scale_convert = ft_to_mm / scale_sheet
 
 
-    def __init__(self, V_b_l,U_b_l, V_t_r, U_t_r, field_img, field_compress_img, lenght_V_of_img, lenght_U_of_img, scale_conv, optimaze_k):
+    def __init__(self, V_b_l,U_b_l, V_t_r, U_t_r, field_img, field_compress_img, lenght_V_of_img, lenght_U_of_img, scale_conv, optimaze_k, name):
         self.V_b_l = V_b_l
         self.U_b_l = U_b_l
         self.V_t_r = V_t_r
@@ -21,6 +21,7 @@ class Segment():
 
         self.result_gen = []
         self.deserial_gen = []
+        self.name = name
 
         self.scale_conv = scale_conv
         self.optimaze_k = optimaze_k
@@ -56,7 +57,7 @@ class Segment():
             self.dots_convert_array.append(elem)
 
     def generator(self):
-        result = gg.genetic_generator_loop((self.lenght_V_of_img, self.lenght_U_of_img), self.field_img, self.field_compress_img, self.dots_convert_array)
+        result = gg.genetic_generator_loop((self.lenght_V_of_img, self.lenght_U_of_img), self.field_img, self.field_compress_img, self.dots_convert_array, self.name)
         result_conv = []
         for item in result:
 

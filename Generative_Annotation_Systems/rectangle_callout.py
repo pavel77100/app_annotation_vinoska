@@ -74,7 +74,7 @@ class Rectangle_callout():
         m_for_right2 = np.copy(m_for_right)
 
         for i in range(self.sizeofbox[0]):  # картинка двигается вправо
-            m_for_y[0:size_y - i, 0:size_x] += self.image_compress[i:size_y, 0:size_x]
+            # m_for_y[0:size_y - i, 0:size_x] += self.image_compress[i:size_y, 0:size_x]
             m_for_left2[0:size_y - i, 0:size_x] += m_for_left[i:size_y, 0:size_x]
             m_for_right2[0:size_y - i, 0:size_x] += m_for_right[i:size_y, 0:size_x]
 
@@ -205,12 +205,18 @@ class Rectangle_callout():
 
     def coordinate_base_generator(self):
 
+
         random_spec = random.randint(0, 1)
         coordinate_base = []
-        if random_spec == 0 and self.zone_for_plant_right != []:#ОТРАЗИТЬ!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-            coordinate_base = random.choice(self.zone_for_plant_right)
-        else:
-            coordinate_base = random.choice(self.zone_for_plant_left)
+        try:
+
+
+            if random_spec == 0 and self.zone_for_plant_right != []:#ОТРАЗИТЬ!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                coordinate_base = random.choice(self.zone_for_plant_right)
+            else:
+                coordinate_base = random.choice(self.zone_for_plant_left)
+        except:
+            coordinate_base = [10,10]
 
 
         return coordinate_base + [random_spec]

@@ -19,7 +19,7 @@ time_cikl_1 = 0
 time_cikl_2 = 0
 time_cikl_3 = 0
 time_mut_1 = 0
-R_MAX = 50
+R_MAX = 60
 R_MIN = 7
 
 MARGIN_LINE = 1
@@ -29,7 +29,7 @@ scale_step_int = int(math.ceil(SCALE_STEP))
 POPULATION_SIZE = 120  # количество индивидуумов в популяции
 P_CROSSOVER = 0.35  # вероятность скрещивания
 P_MUTATION = 0.25  # вероятность мутации индивидуума
-MAX_GENERATIONS = 2000  # максимальное количество поколений
+MAX_GENERATIONS = 1000  # максимальное количество поколений
 HALL_OF_FAME_SIZE = 4  # размер зала славы
 FINE_FOR_TUBE = 3.0  # штраф за пересечение с системой
 
@@ -47,7 +47,24 @@ def zero_centers(image, bx):
 
     return test_img
 
-def genetic_generator_loop(size_of_list, k, k_kompress, data_box):
+def genetic_generator_loop(size_of_list, k, k_kompress, data_box, name_segment):
+    # import matplotlib.pyplot as plt
+    #
+    # fig1111 = plt.figure()
+    #
+    # plt.pcolor(k, cmap="plasma", edgecolors='k')
+    # plt.colorbar()
+
+    # fig1 = plt.figure()
+    #
+    # plt.imshow(np.array(k), cmap="plasma")
+    # plt.colorbar()
+    # # fig2 = plt.figure()
+    # #
+    # # plt.pcolor(img2, cmap="plasma", edgecolors='k')
+    # # plt.colorbar()
+    #
+    # plt.show()
 
     r_min_convert = np.around(np.divide(R_MIN, SCALE_STEP)).astype(int)
     r_max_convert = np.around(np.divide(R_MAX, SCALE_STEP)).astype(int)
@@ -67,12 +84,6 @@ def genetic_generator_loop(size_of_list, k, k_kompress, data_box):
     array_for_change = np.where(k > 2)
     arrayfor_change_y = array_for_change[0]
     arrayfor_change_x = array_for_change[1]
-    # print(array_for_change)
-    # print(arrayfor_change_y)
-    # print(arrayfor_change_x)
-
-
-
 
 
 
@@ -281,26 +292,11 @@ def genetic_generator_loop(size_of_list, k, k_kompress, data_box):
             return (0)
 
     def draw_line2(l_y, l_x, coord, k_b, box_img):
-            # print("TTTTTT!!!!!!!!!!!!!!TTTTTTTTTTT1!!!!!!!!!!!!!!!!!!!")
 
             y_min = min(coord[0][0], coord[1][0])
             y_max = max(coord[0][0], coord[1][0])
-            # l_y = max(coord[0][0], coord[1][0]) - min(coord[0][0], coord[1][0])
-            #
-            # if k_b[0] < 0:
-            #     b_test = l_y
-            # else:
-            #     b_test = 0
 
             ball_for_diag_line = 0
-
-            # for i in range(y_min, y_max):
-            #     right = (i - b_test) / k_b[0]
-            #     for j in range(coord[0][1], coord[1][1]):
-            #         left = k_b[0] * j + b_test
-            #         if math.isclose(i, left, abs_tol=1) and math.isclose(j, right, abs_tol=1):
-            #             if k_for_test_width_zeros[i][j] > 2:
-            #                 ball_for_diag_line += 1
 
             for i in range(y_min, y_max):
                 # xxx1 = int((i - k_b[1]) / k_b[0])
@@ -311,39 +307,20 @@ def genetic_generator_loop(size_of_list, k, k_kompress, data_box):
                 x_max = math.ceil(max(x_1, x_2))
 
                 for j in range(x_min-1, x_max+1):
-                    if box_img[i][j]:
-                        ball_for_diag_line += 1
+                    try:
+                        if box_img[i][j] > 1:
+                            ball_for_diag_line += 1
+                    except:
+                        pass
 
-                # x_max = math.ceil((i - k_b[1]) / k_b[0])
-
-                # xxx2 = math.floor((i - 1 - k_b[1]) / k_b[0] - 1)
-                #
-                # xxx3 = math.ceil((i + 1 - k_b[1]) / k_b[0] + 1)
-
-                # try:
-                #
-                #
-                #
-                #
-                #     # for j in range(coord[0][1], coord[1][1]):
-                #     #     left = k_b[0] * j + b_test
-                #     #     if math.isclose(i, left, abs_tol=1) and math.isclose(j, right, abs_tol=1):
-                #     #         if k_for_test_width_zeros[i][j] > 2:
-                #     #             ball_for_diag_line += 1
-                # except:
-                #     pass
 
             if ball_for_diag_line > 15:
-                # print(ball_for_diag_line)
+
                 return 0.5
 
             else:
 
                 return 0.5*ball_for_diag_line/15
-            # else:
-            #     return ball_for_diag_line/1
-
-            # return ball_for_diag_line
 
 
     def boxFitness(individual):
@@ -409,11 +386,15 @@ def genetic_generator_loop(size_of_list, k, k_kompress, data_box):
         mean_lenght_y = np.mean(lenght_y)
         mean_lenght_x = np.mean(lenght_x)
 
+        max_lenght_y = max(lenght_y)
+        max_lenght_x = max(lenght_x)
+
         radius_mean = (mean_lenght_y ** 2 + mean_lenght_x ** 2) ** 0.5
 
-        s = (square + lines + l_and_b + box_dirt + line_dirt) * 7000 + math.ceil(
-            (radius_mean) / (r_max_convert) * 200) + \
-            (max(mean_lenght_y, mean_lenght_x) / min(mean_lenght_y, mean_lenght_x) - 1) * 80
+        radius_max = (max_lenght_y ** 2 + max_lenght_x ** 2) ** 0.5
+
+        s = (square + lines + l_and_b + box_dirt + line_dirt) * 1000+ (radius_max) / (r_max_convert) * 600 + (radius_mean) / (r_max_convert) * 1200 + \
+            (max(mean_lenght_y, mean_lenght_x) / min(mean_lenght_y, mean_lenght_x) - 1) * 200
         return s,
 
     def crossingover_box(ind1, ind2):
@@ -553,7 +534,11 @@ def genetic_generator_loop(size_of_list, k, k_kompress, data_box):
     #         plt.imshow(matrix2, cmap="cool")
     #         plt.colorbar()
     #
+    #         plt.text(0, 0, name_segment)
+    #
     #         for count in range(len(coordinate_best)):
+    #
+    #             plt.text(coordinate_best[count][1], coordinate_best[count][0], count)
     #             plt.text(coordinate_best[count][1], coordinate_best[count][0], count)
     #             plt.text(coordinate_best[count][1], coordinate_best[count][0] + 3,
     #                      f"[{coordinate_best[count][0]}, {coordinate_best[count][1]}, {coordinate_best[count][2]}")
@@ -620,7 +605,7 @@ def genetic_generator_loop(size_of_list, k, k_kompress, data_box):
     #     # coordinate_best = np.reshape(hof.items[0], (-1, 3))
     # # except:
     # #     print("error")
-
+    #
 
     result = []
     coordinate_best = np.reshape(hof.items[0], (-1, 3))

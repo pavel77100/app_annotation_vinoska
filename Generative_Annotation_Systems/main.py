@@ -133,18 +133,32 @@ async def data(
    # V_bottom_segment_lenght = avarage_V - dots["BottomLeft_V"]
    # coordinate_V_top_segment = avarage_V
 
+
+
+
+
+   # определяем среднее значение игрик
    avarage_V = np.mean(dots_V)
    V_bottom_segment_lenght = avarage_V - dots["BottomLeft_V"]
    coordinate_V_top_segment = avarage_V
 
+   # определяем среднее значение икс
    avarage_U = np.mean(dots_U)
-   U_bottom_segment_lenght = avarage_U - dots["BottomLeft_U"]
-   coordinate_U_top_segment = avarage_U
+   U_left_segment_lenght = avarage_U - dots["BottomLeft_U"]
+   coordinate_U_left_segment = avarage_U
+
+   segment_sort = {}
+   segment_sort["bottom_left"] = sort_dots(dots["BottomLeft_V"], dots["BottomLeft_U"], avarage_V, avarage_U,
+                                           dots["Boxes_list"])
+   segment_sort["top_left"] = sort_dots(avarage_V, dots["BottomLeft_U"], dots["TopRight_V"], avarage_U,
+                                        dots["Boxes_list"])
+   segment_sort["bottom_right"] = sort_dots(dots["BottomLeft_V"], avarage_U, avarage_V, dots["TopRight_U"],
+                                           dots["Boxes_list"])
+   segment_sort["top_right"] = sort_dots(avarage_V, avarage_U, dots["TopRight_V"], dots["TopRight_U"],
+                                        dots["Boxes_list"])
 
    lenght_V = dots["TopRight_V"] - dots["BottomLeft_V"]
    lenght_U = dots["TopRight_U"] - dots["BottomLeft_U"]
-
-   # lenght_V_segment = lenght_V/2
 
    lenght_V_on_list = lenght_V * sheet_scale_convert
    lenght_U_on_list = lenght_U * sheet_scale_convert
@@ -152,91 +166,176 @@ async def data(
    lenght_V_img = np.around(np.divide(lenght_V_on_list, SCALE_STEP)).astype(int)
    lenght_U_img = np.around(np.divide(lenght_U_on_list, SCALE_STEP)).astype(int)
 
+   img_full, img_full_compress = image_generator_devide(img, lenght_V_img, SCALE_STEP, lenght_U_img)
+
    lenght_V_bt_sg_img = np.around(np.divide(V_bottom_segment_lenght * sheet_scale_convert, SCALE_STEP)).astype(int)
    lenght_V_tp_sg_img = lenght_V_img - lenght_V_bt_sg_img
 
-   img_full, img_full_compress = image_generator_devide(img, lenght_V_img, SCALE_STEP, lenght_U_img)
 
-   img_bottom, img_compress_bottom = img_full[0:lenght_V_bt_sg_img, 0:lenght_U_img], img_full_compress[0:lenght_V_bt_sg_img, 0:lenght_U_img]
 
-   img_top, img_compress_top = img_full[lenght_V_bt_sg_img:lenght_V_img, 0:lenght_U_img], img_full_compress[
-                                                                                     lenght_V_bt_sg_img:lenght_V_img,
-                                                                                     0:lenght_U_img]
+   array_of_screens = []
 
-   segment_bottom = Segment(dots["BottomLeft_V"], dots["BottomLeft_U"], coordinate_V_top_segment, dots["TopRight_U"],
-                            img_bottom, img_compress_bottom, lenght_V_bt_sg_img, lenght_U_img,
-                            scale_conv = sheet_scale_convert, optimaze_k=SCALE_STEP)
+   test_top = len(segment_sort["top_left"]) + len(segment_sort["top_right"]) > 15
 
-   segment_top = Segment(coordinate_V_top_segment, dots["BottomLeft_U"], dots["TopRight_V"], dots["TopRight_U"],
-                         img_top, img_compress_top, lenght_V_tp_sg_img, lenght_U_img,
-                         scale_conv = sheet_scale_convert, optimaze_k=SCALE_STEP)
+   test_bottom = len(segment_sort["bottom_left"]) + len(segment_sort["bottom_right"]) > 15
 
-   segment_bottom.dot_sort(dots["Boxes_list"])
 
-   segment_top.dot_sort(dots["Boxes_list"])
+   if test_bottom:
+      dots_bottom = segment_sort["bottom_left"] + segment_sort["bottom_right"]
+      dots_U_list = []
 
-   segment_bottom.dots_to_segment_coordinates()
+      for item in dots_bottom:
+         dots_U_list.append(item["LeaderEnd_U"])
 
-   segment_top.dots_to_segment_coordinates()
+      avarage_U_bottom = np.mean(dots_U_list)
+      U_left_segment_lenght_bt = avarage_U_bottom - dots["BottomLeft_U"]
+      coordinate_U_left_segment_bt = avarage_U_bottom
 
-   res = []
+      lenght_U_left_sg_img_bt = np.around(np.divide(U_left_segment_lenght_bt * sheet_scale_convert, SCALE_STEP)).astype(int)
+      lenght_U_right_sg_img_bt = lenght_U_img - lenght_U_left_sg_img_bt
 
-   # if array_convert_dots_bt != []:
-   #    res.append(result1)
+
+
+      img_left, img_compress_left = img_full[0:lenght_V_bt_sg_img, 0:lenght_U_left_sg_img_bt], img_full_compress[0:lenght_V_bt_sg_img, 0:lenght_U_left_sg_img_bt]
+      img_right, img_compress_right = img_full[0:lenght_V_bt_sg_img, lenght_U_left_sg_img_bt:lenght_U_img], img_full_compress[0:lenght_V_bt_sg_img, lenght_U_left_sg_img_bt:lenght_U_img]
+
+      left = Segment(dots["BottomLeft_V"], dots["BottomLeft_U"], coordinate_V_top_segment, coordinate_U_left_segment_bt,
+                            img_left, img_compress_left, lenght_V_bt_sg_img, lenght_U_left_sg_img_bt,
+                            scale_conv = sheet_scale_convert, optimaze_k=SCALE_STEP, name="bottom_left")
+
+      right = Segment(dots["BottomLeft_V"], coordinate_U_left_segment_bt, coordinate_V_top_segment, dots["TopRight_U"],
+                  img_right, img_compress_right, lenght_V_bt_sg_img, lenght_U_right_sg_img_bt,
+                  scale_conv=sheet_scale_convert, optimaze_k=SCALE_STEP, name="bottom_right")
+
+      # left.dot_sort(dots["Boxes_list"])
+      # left.dots_to_segment_coordinates()
+      #
+      # right.dot_sort(dots["Boxes_list"])
+      # right.dots_to_segment_coordinates()
+
+      array_of_screens.append(left)
+      array_of_screens.append(right)
+
+   else:
+      img_bottom, img_compress_bottom = img_full[0:lenght_V_bt_sg_img, 0:lenght_U_img], img_full_compress[
+                                                                                            0:lenght_V_bt_sg_img,
+                                                                                            0:lenght_U_img]
+
+      bottom = Segment(dots["BottomLeft_V"], dots["BottomLeft_U"], coordinate_V_top_segment, dots["TopRight_U"],
+                     img_bottom, img_compress_bottom, lenght_V_bt_sg_img, lenght_U_img,
+                     scale_conv=sheet_scale_convert, optimaze_k=SCALE_STEP, name="bottom")
+
+      # bottom.dot_sort(dots["Boxes_list"])
+      # bottom.dots_to_segment_coordinates()
+
+      array_of_screens.append(bottom)
+
+
+
+
+   if test_top:
+      dots_top = segment_sort["top_left"] + segment_sort["top_right"]
+      dots_U_list = []
+
+      for item in dots_top:
+         dots_U_list.append(item["LeaderEnd_U"])
+
+      avarage_U_top = np.mean(dots_U_list)
+      U_left_segment_lenght_tp = avarage_U_top - dots["BottomLeft_U"]
+      coordinate_U_left_segment_tp = avarage_U_top
+
+      lenght_U_left_sg_img_tp = np.around(np.divide(U_left_segment_lenght_tp * sheet_scale_convert, SCALE_STEP)).astype(int)
+      lenght_U_right_sg_img_tp = lenght_U_img - lenght_U_left_sg_img_tp
+
+
+      #
+      # img_left, img_compress_left = img_full[0:lenght_V_tp_sg_img, 0:lenght_U_left_sg_img_tp], img_full_compress[0:lenght_V_tp_sg_img, 0:lenght_U_left_sg_img_tp]
+      # img_right, img_compress_right = img_full[0:lenght_V_tp_sg_img, lenght_U_left_sg_img_tp:lenght_U_img], img_full_compress[0:lenght_V_tp_sg_img, lenght_U_left_sg_img_tp:lenght_U_img]
+
+      img_left_tp, img_compress_left_tp = (img_full[lenght_V_bt_sg_img:lenght_V_img, 0:lenght_U_left_sg_img_tp],
+                                     img_full_compress[lenght_V_bt_sg_img:lenght_V_img, 0:lenght_U_left_sg_img_tp])
+
+      img_right_tp, img_compress_right_tp = (img_full[lenght_V_bt_sg_img:lenght_V_img, lenght_U_left_sg_img_tp:lenght_U_img],
+                                       img_full_compress[lenght_V_bt_sg_img:lenght_V_img, lenght_U_left_sg_img_tp:lenght_U_img])
+
+      left = Segment(coordinate_V_top_segment, dots["BottomLeft_U"], dots["TopRight_V"], coordinate_U_left_segment_tp,
+                            img_left_tp, img_compress_left_tp, lenght_V_tp_sg_img, lenght_U_left_sg_img_tp,
+                            scale_conv = sheet_scale_convert, optimaze_k=SCALE_STEP, name="top_left")
+
+      right = Segment(coordinate_V_top_segment, coordinate_U_left_segment_tp, dots["TopRight_V"], dots["TopRight_U"],
+                  img_right_tp, img_compress_right_tp, lenght_V_tp_sg_img, lenght_U_right_sg_img_tp,
+                  scale_conv=sheet_scale_convert, optimaze_k=SCALE_STEP, name="top_right")
+
+      # left.dot_sort(dots["Boxes_list"])
+      # left.dots_to_segment_coordinates()
+      #
+      # right.dot_sort(dots["Boxes_list"])
+      # right.dots_to_segment_coordinates()
+
+
+
+      array_of_screens.append(left)
+      array_of_screens.append(right)
+
+   else:
+
+      img_top, img_compress_top = img_full[lenght_V_bt_sg_img:lenght_V_img, 0:lenght_U_img], img_full_compress[lenght_V_bt_sg_img:lenght_V_img, 0:lenght_U_img]
+
+      top = Segment(coordinate_V_top_segment, dots["BottomLeft_U"], dots["TopRight_V"], dots["TopRight_U"],
+                     img_top, img_compress_top, lenght_V_tp_sg_img, lenght_U_img,
+                     scale_conv=sheet_scale_convert, optimaze_k=SCALE_STEP, name="top")
+      #
+      # top.dot_sort(dots["Boxes_list"])
+      # top.dots_to_segment_coordinates()
+
+      array_of_screens.append(top)
+
+
+   # img_bottom, img_compress_bottom = img_full[0:lenght_V_bt_sg_img, 0:lenght_U_img], img_full_compress[0:lenght_V_bt_sg_img, 0:lenght_U_img]
    #
-   # if array_convert_dots_tp != []:
-   #    res.append(result2)
+   # img_top, img_compress_top = img_full[lenght_V_bt_sg_img:lenght_V_img, 0:lenght_U_img], img_full_compress[
+   #                                                                                   lenght_V_bt_sg_img:lenght_V_img,
+   #                                                                                   0:lenght_U_img]
+   #
+   # segment_bottom = Segment(dots["BottomLeft_V"], dots["BottomLeft_U"], coordinate_V_top_segment, dots["TopRight_U"],
+   #                          img_bottom, img_compress_bottom, lenght_V_bt_sg_img, lenght_U_img,
+   #                          scale_conv = sheet_scale_convert, optimaze_k=SCALE_STEP)
+   #
+   # segment_top = Segment(coordinate_V_top_segment, dots["BottomLeft_U"], dots["TopRight_V"], dots["TopRight_U"],
+   #                       img_top, img_compress_top, lenght_V_tp_sg_img, lenght_U_img,
+   #                       scale_conv = sheet_scale_convert, optimaze_k=SCALE_STEP)
 
-   print("Флаг main 1")
+   # segment_bottom.dot_sort(dots["Boxes_list"])
+   #
+   # segment_top.dot_sort(dots["Boxes_list"])
+   #
+   # segment_bottom.dots_to_segment_coordinates()
+   #
+   # segment_top.dots_to_segment_coordinates()
 
-   start_rasch = time.time()
-   print("Флаг main 2")
-
-   print("создали менеджер")
    manager = Manager()
-   print("создали возвращающий dict")
    return_dict = manager.dict()
-   print("создали p1")
-   p1 = Process(target=generative_process, args=(segment_bottom, return_dict))
-   print("создали p2")
-   p2 = Process(target=generative_process, args=(segment_top, return_dict))
+   processes = []
+   for item in array_of_screens:
+      item.dot_sort(dots["Boxes_list"])
+      if item.dot_array != []:
 
-   p1.start()
-   print("старт p2")
-   p2.start()
-   print("джоин p1")
-   p1.join()
-   print("джоин p2")
-   p2.join()
-   print("proc закончился")
+         item.dots_to_segment_coordinates()
+         p = Process(target=generative_process, args=(item, return_dict))
+         p.start()
+         processes.append(p)
+
+   for item in processes:
+      item.join()
+
 
    result = return_dict.values()
-   #
-   # with Pool(2) as pool:
-   #    result = pool.map(generative, res)
-
-   print("Флаг main 3")
-   end_rasch = time.time()
-   print("Флаг main 4")
-   print(f"На генерацию ушло {end_rasch - start_rasch}")
-   print("Флаг main 5")
 
    otvet = []
+   for pr in result:
+      otvet.extend(pr)
 
-   dict_array = {}
-
-
-
-   print("Флаг 2")
-   print("*******************************************************")
-   print(result[0])
-   print("*******************************************************")
-   print(result[1])
-   print("*******************************************************")
-   print("*******************************************************")
-   print(result)
-   print("*******************************************************")
-   return json.dumps(result[0]+result[1])
+   return json.dumps(otvet)
 
 # @app.post("/da2ta")
 # async def da2ta(
